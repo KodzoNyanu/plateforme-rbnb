@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge_statut %}
+{% block title %}Réservation — Locations Togo{% endblock %}
+
+{% set confirmee = r.statut == 'confirmee' %}
+
+{% block content %}
+<h1 class="section-title">{{ 'Réservation confirmée' if confirmee else 'Finaliser la réservation' }}</h1>
+<p class="section-sub">{{ r.titre }} — {{ r.quartier }}, {{ r.commune }}</p>
+
+<div class="resa-grille">
+    <div class="resa-recap">
+        <h3>Récapitulatif</h3>
+        <table class="recap-table">
+            <tr><td>Type de location</td><td>{{ 'Longue durée (au mois)' if r.mode_location == 'longue_duree' else 'Courte durée (à la nuitée)' }}</td></tr>
+            <tr><td>{{ 'Emménagement' if r.mode_location == 'longue_duree' else 'Arrivée' }}</td><td>{{ r.date_debut }}</td></tr>
+            {% if r.date_fin %}<tr><td>Départ</td><td>{{ r.date_fin }} <span class="muted">({{ r.nb_unites }} nuit(s))</span></td></tr>{% endif %}
+            <tr><td>Statut</td><td>{{ badge_statut(r.statut) }}</td></tr>
+        </table>
+
+        <div class="recap-montants">
+            <div class="ligne-montant"><span>Frais de réservation (en ligne)</span><strong>{{ "{:,.0f}".format(r.montant_en_ligne).replace(",", " ") }} FCFA</strong></div>
+            <div class="ligne-montant"><span>À régler sur place {{ '(loyer)' if r.mode_location == 'longue_duree' else '(solde du séjour)' }}</span><strong>{{ "{:,.0f}".format(r.montant_sur_place).replace(",", " ") }} FCFA</strong></div>
+        </div>
+    </div>
+
+    <div class="resa-action">
+        {% if confirmee %}
+            <div class="contact-debloque">
+                <h3>📇 Coordonnées du propriétaire</h3>
+                <p><strong>{{ r.proprietaire_nom }}</strong></p>
+                {% if r.proprietaire_tel %}<p>📞 {{ r.proprietaire_tel }}</p>{% endif %}
+                {% if r.proprietaire_email %}<p>✉️ {{ r.proprietaire_email }}</p>{% endif %}
+                {% if r.adresse_precise %}<p class="muted">Repère : {{ r.adresse_precise }}</p>{% endif %}
+                <p class="muted" style="margin-top:12px;">Contactez le propriétaire pour organiser la visite / l'entrée. Le montant restant se règle sur place.</p>
+            </div>
+        {% else %}
+            <div class="paiement-box">
+                <h3>Payer les frais de réservation</h3>
+                <p class="muted">Le paiement en ligne confirme la réservation et débloque les coordonnées du propriétaire.</p>
+                <p class="montant-a-payer">{{ "{:,.0f}".format(r.montant_en_ligne).replace(",", " ") }} FCFA</p>
+
+                {% if cinetpay_actif %}
+                <form method="post" action="{{ url_for('reservations.payer', reservation_id=r.id) }}">
+                    <button type="submit" class="btn btn-primary" style="width:100%;">Payer avec CinetPay</button>
+                </form>
+                <p class="muted demo-note">🔒 Paiement sécurisé CinetPay — Mobile Money (Flooz, T-Money, Moov, Orange) ou carte bancaire.</p>
+                {% else %}
+                <form method="post" action="{{ url_for('reservations.payer', reservation_id=r.id) }}">
+                    <label>Moyen de paiement</label>
+                    <div class="moyens-paiement">
+                        <label class="moyen"><input type="radio" name="methode" value="mobile_money" checked> 📱 Mobile Money (Flooz / T-Money)</label>
+                        <label class="moyen"><input type="radio" name="methode" value="paypal"> 🅿️ PayPal</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%; margin-top:14px;">Payer {{ "{:,.0f}".format(r.montant_en_ligne).replace(",", " ") }} FCFA</button>
+                </form>
+                <p class="muted demo-note">⚙️ Paiement simulé — configure tes clés CinetPay dans <code>.env</code> pour activer le paiement réel.</p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<p style="margin-top:20px;"><a href="{{ url_for('reservations.index') }}">← Mes réservations</a></p>
+{% endblock %}

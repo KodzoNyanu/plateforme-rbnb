@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_macros.html" import champs_annonce %}
+{% block title %}Modifier l'annonce — Locations Togo{% endblock %}
+
+{% block content %}
+<p><a href="{{ url_for('mes_annonces.index') }}">← Retour à mes annonces</a></p>
+<h1 class="section-title">Modifier l'annonce</h1>
+
+{% if erreurs %}
+<div class="alerte-erreur">
+    <strong>Merci de corriger :</strong>
+    <ul>{% for e in erreurs %}<li>{{ e }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<form method="post" action="{{ url_for('mes_annonces.modifier', propriete_id=annonce_id) }}" class="form-annonce" enctype="multipart/form-data">
+    {{ champs_annonce(v, types, quartiers, photos=photos) }}
+    <button type="submit" class="btn btn-primary" style="font-size:1.05rem;">Enregistrer les modifications</button>
+</form>
+{% endblock %}

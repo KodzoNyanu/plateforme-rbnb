@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Inscription — Locations Togo{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <h1 class="section-title">Créer un compte</h1>
+    <p class="section-sub">Rejoins la plateforme en quelques secondes.</p>
+
+    {% if erreurs %}
+    <div class="alerte-erreur">
+        <ul>{% for e in erreurs %}<li>{{ e }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('auth.register') }}">
+        <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
+
+        <div class="field">
+            <label>Je souhaite *</label>
+            <div class="role-choix">
+                <label class="role-option">
+                    <input type="radio" name="role" value="locataire" {{ 'checked' if form.role != 'proprietaire' }}>
+                    <span>🔎 Chercher un logement</span>
+                </label>
+                <label class="role-option">
+                    <input type="radio" name="role" value="proprietaire" {{ 'checked' if form.role == 'proprietaire' }}>
+                    <span>🏠 Proposer un logement</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Nom complet *</label>
+            <input type="text" name="nom" value="{{ form.nom or '' }}" placeholder="ex: Koffi Mensah" required>
+        </div>
+        <div class="field">
+            <label>Email</label>
+            <input type="email" name="email" value="{{ form.email or '' }}" placeholder="ex: koffi@exemple.tg">
+        </div>
+        <div class="field">
+            <label>Téléphone</label>
+            <input type="tel" name="telephone" value="{{ form.telephone or '' }}" placeholder="ex: +228 90 00 00 00">
+        </div>
+        <p class="muted" style="font-size:.85rem; margin-top:-6px;">Renseigne au moins un email ou un téléphone.</p>
+
+        <div class="field">
+            <label>Mot de passe * <span class="muted">(8 caractères min.)</span></label>
+            <input type="password" name="mot_de_passe" required>
+        </div>
+        <div class="field">
+            <label>Confirmer le mot de passe *</label>
+            <input type="password" name="mot_de_passe2" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%; margin-top:8px;">Créer mon compte</button>
+    </form>
+
+    <p class="auth-switch">Déjà un compte ? <a href="{{ url_for('auth.login') }}">Se connecter</a></p>
+</div>
+{% endblock %}

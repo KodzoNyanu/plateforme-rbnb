@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "_macros.html" import carte_annonce %}
+{% block title %}Recherche — Locations Togo{% endblock %}
+
+{% block content %}
+<h1 class="section-title">Rechercher un logement</h1>
+<p class="section-sub">Filtrez par zone, type, nombre de pièces et mode de location.</p>
+
+<form method="get" action="{{ url_for('search.index') }}">
+    <div class="form-row">
+        <div class="field">
+            <label>Ville</label>
+            <select name="ville_id">
+                <option value="">Toutes</option>
+                {% for v in villes %}<option value="{{ v.id }}" {{ 'selected' if filtres.ville_id == v.id }}>{{ v.nom }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label>Quartier</label>
+            <select name="quartier_id">
+                <option value="">Tous</option>
+                {% for q in quartiers %}<option value="{{ q.id }}" {{ 'selected' if filtres.quartier_id == q.id }}>{{ q.nom }} ({{ q.commune }})</option>{% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label>Type de bien</label>
+            <select name="type_id">
+                <option value="">Tous</option>
+                {% for t in types %}<option value="{{ t.id }}" {{ 'selected' if filtres.type_id == t.id }}>{{ t.libelle }}</option>{% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="field">
+            <label>Chambres (min.)</label>
+            <select name="nb_chambres">
+                <option value="">Indifférent</option>
+                {% for n in [1,2,3,4,5] %}<option value="{{ n }}" {{ 'selected' if filtres.nb_chambres == n }}>{{ n }}+</option>{% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label>Mode de location</label>
+            <select name="mode">
+                <option value="">Indifférent</option>
+                <option value="mois" {{ 'selected' if filtres.mode == 'mois' }}>Au mois</option>
+                <option value="nuit" {{ 'selected' if filtres.mode == 'nuit' }}>À la nuitée</option>
+            </select>
+        </div>
+        <div class="field">
+            <label>Prix max (FCFA)</label>
+            <input type="number" name="prix_max" min="0" step="5000" value="{{ filtres.prix_max or '' }}" placeholder="ex: 150000">
+        </div>
+        <div class="field" style="display:flex;align-items:flex-end;">
+            <button class="btn btn-primary" type="submit">Rechercher</button>
+        </div>
+    </div>
+</form>
+
+{% if a_cherche %}
+    <h2 class="section-title" style="font-size:1.2rem;margin-top:24px;">
+        {{ resultats|length }} résultat(s)
+    </h2>
+    {% if resultats %}
+    <div class="grid grid-3">
+        {% for a in resultats %}{{ carte_annonce(a) }}{% endfor %}
+    </div>
+    {% else %}
+    <div class="empty">Aucun bien ne correspond à ces critères. Élargissez la recherche.</div>
+    {% endif %}
+{% endif %}
+{% endblock %}

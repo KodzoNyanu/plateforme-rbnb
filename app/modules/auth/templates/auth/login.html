@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Connexion — Locations Togo{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <h1 class="section-title">Connexion</h1>
+    <p class="section-sub">Accède à ton espace.</p>
+
+    {% if erreurs %}
+    <div class="alerte-erreur">
+        <ul>{% for e in erreurs %}<li>{{ e }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('auth.login') }}">
+        <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
+        <div class="field">
+            <label>Email ou téléphone</label>
+            <input type="text" name="identifiant" value="{{ form.identifiant or '' }}" placeholder="ton email ou ton numéro" required>
+        </div>
+        <div class="field">
+            <label>Mot de passe</label>
+            <input type="password" name="mot_de_passe" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; margin-top:8px;">Se connecter</button>
+    </form>
+
+    <p class="auth-switch">Pas encore de compte ? <a href="{{ url_for('auth.register') }}">S'inscrire</a></p>
+</div>
+{% endblock %}

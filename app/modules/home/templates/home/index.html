@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Locations Togo — Accueil{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Trouvez votre logement au Togo, quartier par quartier</h1>
+    <p>Bien plus qu'un catalogue : comparez la sécurité, l'accessibilité et le coût
+       de la vie de chaque quartier avant de choisir. Location au mois ou à la nuitée.</p>
+    <a class="btn btn-primary" href="{{ url_for('search.index') }}">Lancer une recherche</a>
+    <a class="btn btn-outline" href="{{ url_for('zones.index') }}">Comparer les quartiers</a>
+</section>
+
+{% if carrousel %}
+<h2 class="section-title">Logements les plus prisés</h2>
+<p class="section-sub">Les biens les plus réservés du moment.</p>
+
+<div class="carrousel" id="carrousel">
+    <div class="carrousel-piste" id="carrousel-piste">
+        {% for a in carrousel %}
+        <a class="carrousel-slide" href="{{ url_for('properties.detail', propriete_id=a.id) }}"
+           style="background-image:url('{{ a.photo }}')">
+            <div class="carrousel-contenu">
+                <span class="carrousel-badge">{{ a.type_bien }}{% if a.nb_resa %} · {{ a.nb_resa }} réservation(s){% endif %}</span>
+                <h3>{{ a.titre }}</h3>
+                <p>{{ a.quartier }}, {{ a.commune }}</p>
+                <p class="carrousel-prix">
+                    {% if a.prix_mois %}{{ "{:,.0f}".format(a.prix_mois).replace(",", " ") }} FCFA/mois{% endif %}
+                    {% if a.prix_mois and a.prix_nuit %} · {% endif %}
+                    {% if a.prix_nuit %}{{ "{:,.0f}".format(a.prix_nuit).replace(",", " ") }} FCFA/nuit{% endif %}
+                </p>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    {% if carrousel|length > 1 %}
+    <button class="carrousel-fleche gauche" type="button" onclick="carrouselAller(-1)" aria-label="Précédent">‹</button>
+    <button class="carrousel-fleche droite" type="button" onclick="carrouselAller(1)" aria-label="Suivant">›</button>
+    <div class="carrousel-points" id="carrousel-points">
+        {% for a in carrousel %}
+        <button type="button" class="point{{ ' actif' if loop.first }}" onclick="carrouselVersOnclick({{ loop.index0 }})" aria-label="Aller à la diapositive {{ loop.index }}"></button>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<h2 class="section-title">Quartiers à découvrir</h2>
+<p class="section-sub">Explorez les zones et leurs spécificités.</p>
+
+{% if quartiers %}
+<div class="grid grid-3">
+    {% for q in quartiers %}
+    <a class="card" href="{{ url_for('zones.detail', slug=q.slug) }}">
+        <div class="card-body">
+            <h3>{{ q.nom }}</h3>
+            <p class="muted">{{ q.commune }} · {{ q.ville }}</p>
+            <p class="muted">{{ q.description or "Découvrez ce quartier et ses avantages." }}</p>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty">Aucun quartier en base pour l'instant. Lance le script <code>db/schema.sql</code>.</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if carrousel and carrousel|length > 1 %}
+<script>
+(function () {
+    var piste = document.getElementById('carrousel-piste');
+    var points = document.querySelectorAll('#carrousel-points .point');
+    var total = {{ carrousel|length }};
+    var index = 0, timer = null;
+
+    function afficher() {
+        piste.style.transform = 'translateX(' + (-index * 100) + '%)';
+        points.forEach(function (p, i) { p.classList.toggle('actif', i === index); });
+    }
+    window.carrouselAller = function (pas) {
+        index = (index + pas + total) % total;
+        afficher(); relancer();
+    };
+    window.carrouselVersOnclick = function (i) { index = i; afficher(); relancer(); };
+    function relancer() {
+        if (timer) clearInterval(timer);
+        timer = setInterval(function () { window.carrouselAller(1); }, 5000);
+    }
+    afficher(); relancer();
+})();
+</script>
+{% endif %}
+{% endblock %}

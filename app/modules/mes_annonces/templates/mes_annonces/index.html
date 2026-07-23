@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge_statut %}
+{% block title %}Mes annonces — Locations Togo{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    <div>
+        <h1 class="section-title">Mes annonces</h1>
+        <p class="section-sub">Gérez vos biens : modifier, publier, archiver ou supprimer.</p>
+    </div>
+    <a class="btn btn-primary" href="{{ url_for('deposer.index') }}">+ Déposer une annonce</a>
+</div>
+
+{% if annonces %}
+<div class="annonces-gestion">
+    {% for a in annonces %}
+    <div class="ligne-annonce">
+        <div class="ligne-photo">
+            {% if a.photo %}<img src="{{ a.photo }}" alt="">{% else %}<div class="no-photo">🏠</div>{% endif %}
+        </div>
+        <div class="ligne-info">
+            <div>
+                <a href="{{ url_for('properties.detail', propriete_id=a.id) }}"><strong>{{ a.titre }}</strong></a>
+                {{ badge_statut(a.statut) }}
+            </div>
+            <p class="muted">{{ a.type_bien }} · {{ a.nb_chambres }} ch. salon · {{ a.quartier }}, {{ a.commune }}</p>
+            <p>
+                {% if a.prix_mois %}<span class="price">{{ "{:,.0f}".format(a.prix_mois).replace(",", " ") }} FCFA/mois</span>{% endif %}
+                {% if a.prix_nuit %}<span class="price" style="margin-left:10px;">{{ "{:,.0f}".format(a.prix_nuit).replace(",", " ") }} FCFA/nuit</span>{% endif %}
+            </p>
+        </div>
+        <div class="ligne-actions">
+            <a class="btn-mini" href="{{ url_for('mes_annonces.modifier', propriete_id=a.id) }}">Modifier</a>
+
+            {% if a.statut == 'publiee' %}
+            <form method="post" action="{{ url_for('mes_annonces.statut', propriete_id=a.id) }}">
+                <input type="hidden" name="statut" value="archivee">
+                <button class="btn-mini" type="submit">Archiver</button>
+            </form>
+            {% else %}
+            <form method="post" action="{{ url_for('mes_annonces.statut', propriete_id=a.id) }}">
+                <input type="hidden" name="statut" value="publiee">
+                <button class="btn-mini btn-mini-vert" type="submit">Publier</button>
+            </form>
+            {% endif %}
+
+            <form method="post" action="{{ url_for('mes_annonces.supprimer', propriete_id=a.id) }}"
+                  onsubmit="return confirm('Supprimer définitivement cette annonce ?');">
+                <button class="btn-mini btn-mini-rouge" type="submit">Supprimer</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+    Vous n'avez pas encore d'annonce.
+    <br><br><a class="btn btn-primary" href="{{ url_for('deposer.index') }}">Déposer ma première annonce</a>
+</div>
+{% endif %}
+{% endblock %}

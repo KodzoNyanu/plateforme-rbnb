@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_macros.html" import champs_annonce %}
+{% block title %}Déposer une annonce — Locations Togo{% endblock %}
+
+{% block content %}
+<h1 class="section-title">Déposer une annonce</h1>
+<p class="section-sub">Décrivez votre bien, choisissez le mode de location et fixez vos prix.</p>
+
+{% if erreurs %}
+<div class="alerte-erreur">
+    <strong>Merci de corriger :</strong>
+    <ul>{% for e in erreurs %}<li>{{ e }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<form method="post" action="{{ url_for('deposer.index') }}" class="form-annonce" enctype="multipart/form-data">
+    {{ champs_annonce(v, types, quartiers) }}
+    <button type="submit" class="btn btn-primary" style="font-size:1.05rem;">Publier l'annonce</button>
+</form>
+{% endblock %}

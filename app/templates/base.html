@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Locations Togo{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container header-inner">
+            <a class="brand" href="{{ url_for('home.index') }}">🏠 Locations<span>Togo</span></a>
+            <nav class="main-nav">
+                <a href="{{ url_for('search.index') }}">Rechercher</a>
+                <a href="{{ url_for('zones.index') }}">Guide des quartiers</a>
+                <a href="{{ url_for('properties.index') }}">Annonces</a>
+                {% if current_user %}
+                    {% if current_user.role == 'admin' %}
+                    <a href="{{ url_for('commissions.index') }}">Commissions</a>
+                    {% elif current_user.role in ['proprietaire', 'agence'] %}
+                    <a href="{{ url_for('mes_annonces.index') }}">Mes annonces</a>
+                    <a class="btn btn-outline" href="{{ url_for('deposer.index') }}">Déposer une annonce</a>
+                    {% else %}
+                    <a href="{{ url_for('reservations.index') }}">Mes réservations</a>
+                    {% endif %}
+                    <span class="nav-user">Bonjour, {{ current_user.nom_complet.split(' ')[0] }}</span>
+                    <a href="{{ url_for('auth.logout') }}">Déconnexion</a>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}">Connexion</a>
+                    <a class="btn btn-outline" href="{{ url_for('auth.register') }}">Inscription</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main class="container page">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for categorie, message in messages %}
+            <div class="flash flash-{{ categorie }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-grid">
+            <div class="footer-brand">
+                <a class="brand" href="{{ url_for('home.index') }}">🏠 Locations<span>Togo</span></a>
+                <p class="muted">La plateforme de référence des locations au Togo. Trouvez, comparez les quartiers et réservez en toute confiance.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Explorer</h4>
+                <a href="{{ url_for('search.index') }}">Rechercher un logement</a>
+                <a href="{{ url_for('zones.index') }}">Guide des quartiers</a>
+                <a href="{{ url_for('properties.index') }}">Toutes les annonces</a>
+            </div>
+            <div class="footer-col">
+                <h4>Propriétaires</h4>
+                <a href="{{ url_for('deposer.index') }}">Déposer une annonce</a>
+                <a href="{{ url_for('auth.register') }}">Créer un compte</a>
+            </div>
+            <div class="footer-col">
+                <h4>Aide</h4>
+                <a href="#">Comment ça marche</a>
+                <a href="#">Nous contacter</a>
+                <a href="#">Conditions d'utilisation</a>
+            </div>
+        </div>
+        <div class="footer-bas">
+            <div class="container">
+                <span>© {{ annee }} Locations Togo. Tous droits réservés.</span>
+                <span>Région › Ville › Commune › Quartier</span>
+            </div>
+        </div>
+    </footer>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

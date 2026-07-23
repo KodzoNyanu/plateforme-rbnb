@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Guide des quartiers — Locations Togo{% endblock %}
+
+{% block content %}
+<h1 class="section-title">Guide des quartiers</h1>
+<p class="section-sub">Découvrez chaque zone, ou comparez deux quartiers côte à côte.</p>
+
+<form class="form-row" action="{{ url_for('zones.comparer') }}" method="get">
+    <div class="field">
+        <label>Quartier A</label>
+        <select name="a" required>
+            <option value="">— choisir —</option>
+            {% for q in quartiers %}<option value="{{ q.slug }}">{{ q.nom }} ({{ q.commune }})</option>{% endfor %}
+        </select>
+    </div>
+    <div class="field">
+        <label>Quartier B</label>
+        <select name="b" required>
+            <option value="">— choisir —</option>
+            {% for q in quartiers %}<option value="{{ q.slug }}">{{ q.nom }} ({{ q.commune }})</option>{% endfor %}
+        </select>
+    </div>
+    <div class="field" style="display:flex; align-items:flex-end;">
+        <button class="btn btn-primary" type="submit">Comparer</button>
+    </div>
+</form>
+
+{% if quartiers %}
+<div class="grid grid-3">
+    {% for q in quartiers %}
+    <a class="card" href="{{ url_for('zones.detail', slug=q.slug) }}">
+        <div class="card-body">
+            <h3>{{ q.nom }}</h3>
+            <p class="muted">{{ q.commune }} · {{ q.ville }}</p>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty">Aucun quartier en base. Exécute <code>db/schema.sql</code>.</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}{{ a.titre }} — Locations Togo{% endblock %}
+
+{% block content %}
+<p class="muted">{{ a.ville }} › {{ a.commune }} › {{ a.quartier }}</p>
+<h1 class="section-title">{{ a.titre }}</h1>
+
+{% if photos %}
+<div class="galerie">
+    <img id="photo-principale" src="{{ photos[0].url }}" alt="{{ a.titre }}" class="galerie-principale">
+    {% if photos|length > 1 %}
+    <div class="galerie-miniatures">
+        {% for ph in photos %}
+        <img src="{{ ph.url }}" alt="" class="galerie-mini{{ ' actif' if loop.first }}"
+             onclick="document.getElementById('photo-principale').src=this.src;
+                      document.querySelectorAll('.galerie-mini').forEach(function(m){m.classList.remove('actif')});
+                      this.classList.add('actif');">
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="detail-grille">
+    <div class="detail-infos">
+        <p>
+            <span class="tag">{{ a.type_bien }}</span>
+            <span class="tag">{{ a.nb_chambres }} chambre(s) salon</span>
+            {% if a.surface_m2 %}<span class="tag">{{ a.surface_m2 }} m²</span>{% endif %}
+            {% if a.meuble %}<span class="tag">Meublé</span>{% endif %}
+        </p>
+        <p style="margin-top:16px;"><a href="{{ url_for('zones.detail', slug=a.quartier_slug) }}">→ En savoir plus sur le quartier {{ a.quartier }}</a></p>
+    </div>
+
+    <div class="detail-resa">
+        <div class="card-body">
+            {% if a.prix_mois %}<p class="price">{{ "{:,.0f}".format(a.prix_mois).replace(",", " ") }} FCFA <span class="muted">/mois</span></p>{% endif %}
+            {% if a.prix_nuit %}<p class="price">{{ "{:,.0f}".format(a.prix_nuit).replace(",", " ") }} FCFA <span class="muted">/nuit</span></p>{% endif %}
+
+            {% if current_user and current_user.id == a.proprietaire_id %}
+                <p class="muted">C'est votre annonce.</p>
+            {% elif not current_user %}
+                <a class="btn btn-primary" href="{{ url_for('auth.login', next=url_for('properties.detail', propriete_id=a.id)) }}" style="width:100%;">Se connecter pour réserver</a>
+            {% else %}
+                <form method="post" action="{{ url_for('reservations.creer') }}" class="form-resa">
+                    <input type="hidden" name="propriete_id" value="{{ a.id }}">
+
+                    {% if a.prix_nuit and a.prix_mois %}
+                    <label>Type de réservation</label>
+                    <select name="mode_reservation" id="mode_resa" onchange="majResa()">
+                        <option value="nuit">À la nuitée</option>
+                        <option value="mois">Au mois</option>
+                    </select>
+                    {% elif a.prix_nuit %}
+                    <input type="hidden" name="mode_reservation" value="nuit">
+                    {% else %}
+                    <input type="hidden" name="mode_reservation" value="mois">
+                    {% endif %}
+
+                    <label id="lbl_debut">{{ "Arrivée" if a.prix_nuit else "Emménagement" }}</label>
+                    <input type="date" name="date_debut" min="{{ aujourd_hui }}" required>
+
+                    <div id="bloc_depart" {% if not a.prix_nuit %}hidden{% endif %}>
+                        <label>Départ</label>
+                        <input type="date" name="date_fin" min="{{ aujourd_hui }}">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width:100%; margin-top:12px;">Réserver</button>
+                </form>
+                <p class="muted" style="font-size:.82rem; margin-top:10px;">🔒 Les coordonnées du propriétaire se débloquent après paiement des frais de réservation.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    function majResa() {
+        var sel = document.getElementById('mode_resa');
+        if (!sel) return;
+        var nuit = sel.value === 'nuit';
+        document.getElementById('bloc_depart').hidden = !nuit;
+        document.getElementById('lbl_debut').textContent = nuit ? 'Arrivée' : 'Emménagement';
+    }
+    majResa();
+</script>
+{% endblock %}

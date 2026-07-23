@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import carte_annonce %}
+{% block title %}Annonces — Locations Togo{% endblock %}
+
+{% block content %}
+<h1 class="section-title">Annonces</h1>
+<p class="section-sub">Toutes les locations publiées, du mois à la nuitée.</p>
+
+{% if annonces %}
+<div class="grid grid-3">
+    {% for a in annonces %}{{ carte_annonce(a) }}{% endfor %}
+</div>
+{% else %}
+<div class="empty">Aucune annonce publiée pour l'instant.</div>
+{% endif %}
+{% endblock %}

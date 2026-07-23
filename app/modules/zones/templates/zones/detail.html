@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ quartier.nom }} — Guide des quartiers{% endblock %}
+
+{% block content %}
+<p class="muted">{{ quartier.region }} › {{ quartier.ville }} › {{ quartier.commune }}</p>
+<h1 class="section-title">{{ quartier.nom }}</h1>
+<p class="section-sub">{{ quartier.description or "Description à venir." }}</p>
+
+{% if loyer and loyer.nb_biens %}
+<p class="price">Loyer moyen constaté : {{ "{:,.0f}".format(loyer.loyer_moyen).replace(",", " ") }} FCFA/mois
+   <span class="muted">({{ loyer.nb_biens }} bien(s) publié(s))</span></p>
+{% endif %}
+
+<h2 class="section-title" style="font-size:1.2rem; margin-top:24px;">Critères de la zone</h2>
+<table class="compare-table">
+    <thead><tr><th>Critère</th><th>Évaluation</th></tr></thead>
+    <tbody>
+    {% for s in scores %}
+        <tr>
+            <td>{{ s.libelle }} <span class="muted">{{ s.unite or "" }}</span></td>
+            <td>
+                {% if s.type_valeur == 'score' and s.score is not none %}
+                    <span class="score-bar" style="width: {{ (s.score / 5 * 120)|round }}px;"></span>
+                    <strong>{{ s.score }}/5</strong>
+                {% elif s.type_valeur == 'numerique' and s.valeur_num is not none %}
+                    <strong>{{ "{:,.0f}".format(s.valeur_num).replace(",", " ") }}</strong>
+                {% elif s.valeur_texte %}
+                    {{ s.valeur_texte }}
+                {% else %}
+                    <span class="muted">non renseigné</span>
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

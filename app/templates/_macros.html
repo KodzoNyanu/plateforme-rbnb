@@ -1,0 +1,137 @@
+{# ═══════════════════════════════════════════════════════════════════════
+   Macros partagées, réutilisées par plusieurs pages.
+   ═══════════════════════════════════════════════════════════════════════ #}
+
+{# ---- Carte d'annonce (liste + résultats de recherche) ---- #}
+{% macro carte_annonce(a) %}
+<a class="card" href="{{ url_for('properties.detail', propriete_id=a.id) }}">
+    {% if a.photo %}<img src="{{ a.photo }}" alt="{{ a.titre }}" style="width:100%;height:170px;object-fit:cover;">{% endif %}
+    <div class="card-body">
+        <h3>{{ a.titre }}</h3>
+        <p class="muted">{{ a.type_bien }} · {{ a.nb_chambres }} ch. salon · {{ a.quartier }}, {{ a.commune }}</p>
+        <p>
+            {% if a.prix_mois %}<span class="price">{{ "{:,.0f}".format(a.prix_mois).replace(",", " ") }} FCFA<span class="muted">/mois</span></span>{% endif %}
+            {% if a.prix_nuit %}<br><span class="price">{{ "{:,.0f}".format(a.prix_nuit).replace(",", " ") }} FCFA<span class="muted">/nuit</span></span>{% endif %}
+        </p>
+        {% if a.meuble %}<span class="tag">Meublé</span>{% endif %}
+    </div>
+</a>
+{% endmacro %}
+
+
+{# ---- Badge de statut d'une annonce ---- #}
+{% macro badge_statut(statut) %}
+    {% set libelles = {'brouillon':'Brouillon', 'en_validation':'En validation', 'publiee':'Publiée', 'loue':'Loué', 'archivee':'Archivée'} %}
+    <span class="badge badge-{{ statut }}">{{ libelles.get(statut, statut) }}</span>
+{% endmacro %}
+
+
+{# ---- Champs de formulaire d'une annonce (dépôt ET modification) ----
+   `v` est un dict de valeurs (vide au dépôt, pré-rempli à la modification). #}
+{% macro champs_annonce(v, types, quartiers, photos=None) %}
+<fieldset>
+    <legend>Le bien</legend>
+    <div class="form-row">
+        <div class="field" style="flex:2;">
+            <label>Titre de l'annonce *</label>
+            <input type="text" name="titre" value="{{ v.get('titre','') }}" placeholder="ex: Villa 3 chambres salon à Tokoin" required>
+        </div>
+        <div class="field">
+            <label>Type de bien *</label>
+            <select name="type_id" required>
+                <option value="">— choisir —</option>
+                {% for t in types %}<option value="{{ t.id }}" {{ 'selected' if v.get('type_id')|string == t.id|string }}>{{ t.libelle }}</option>{% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="field">
+        <label>Description</label>
+        <textarea name="description" rows="3" placeholder="Atouts du bien, environnement, équipements...">{{ v.get('description','') }}</textarea>
+    </div>
+</fieldset>
+
+<fieldset>
+    <legend>Localisation</legend>
+    <div class="form-row">
+        <div class="field">
+            <label>Quartier *</label>
+            <select name="quartier_id" required>
+                <option value="">— choisir —</option>
+                {% for q in quartiers %}<option value="{{ q.id }}" {{ 'selected' if v.get('quartier_id')|string == q.id|string }}>{{ q.ville }} › {{ q.commune }} › {{ q.nom }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="field" style="flex:2;">
+            <label>Adresse / repère (facultatif)</label>
+            <input type="text" name="adresse" value="{{ v.get('adresse','') }}" placeholder="ex: près du marché, rue non goudronnée">
+        </div>
+    </div>
+</fieldset>
+
+<fieldset>
+    <legend>Caractéristiques (chambre salon)</legend>
+    <div class="form-row">
+        <div class="field"><label>Chambres</label><input type="number" name="nb_chambres" min="0" value="{{ v.get('nb_chambres', 0) }}"></div>
+        <div class="field"><label>Salons</label><input type="number" name="nb_salons" min="0" value="{{ v.get('nb_salons', 1) }}"></div>
+        <div class="field"><label>Salles de bain</label><input type="number" name="nb_salles_bain" min="0" value="{{ v.get('nb_salles_bain', 1) }}"></div>
+        <div class="field"><label>Surface (m²)</label><input type="number" name="surface_m2" min="0" step="0.5" value="{{ v.get('surface_m2','') }}"></div>
+        <div class="field"><label>Étage</label><input type="number" name="etage" value="{{ v.get('etage','') }}"></div>
+    </div>
+    <label class="checkbox"><input type="checkbox" name="meuble" {{ 'checked' if v.get('meuble') }}> Bien meublé</label>
+</fieldset>
+
+<fieldset>
+    <legend>Mode de location & tarifs</legend>
+    <div class="field">
+        <label>Mode de location *</label>
+        <select name="mode_location" id="mode_location" required onchange="majTarifs()">
+            <option value="">— choisir —</option>
+            <option value="longue_duree" {{ 'selected' if v.get('mode_location') == 'longue_duree' }}>Longue durée (au mois)</option>
+            <option value="courte_duree" {{ 'selected' if v.get('mode_location') == 'courte_duree' }}>Courte durée (à la nuitée)</option>
+            <option value="les_deux" {{ 'selected' if v.get('mode_location') == 'les_deux' }}>Les deux</option>
+        </select>
+    </div>
+
+    <div id="bloc_mois" class="bloc-tarif" hidden>
+        <div class="form-row">
+            <div class="field"><label>Prix par mois (FCFA)</label><input type="number" name="prix_mois" min="0" step="5000" value="{{ v.get('prix_mois','') }}" placeholder="ex: 120000"></div>
+            <div class="field"><label>Caution (nb de mois d'avance)</label><input type="number" name="caution_mois" min="0" value="{{ v.get('caution_mois','') }}" placeholder="ex: 6"></div>
+        </div>
+    </div>
+
+    <div id="bloc_nuit" class="bloc-tarif" hidden>
+        <div class="form-row">
+            <div class="field"><label>Prix par nuitée (FCFA)</label><input type="number" name="prix_nuit" min="0" step="1000" value="{{ v.get('prix_nuit','') }}" placeholder="ex: 25000"></div>
+            <div class="field"><label>Nuits minimum</label><input type="number" name="min_nuits" min="1" value="{{ v.get('min_nuits','') }}" placeholder="ex: 2"></div>
+            <div class="field"><label>Capacité (voyageurs)</label><input type="number" name="capacite_voyageurs" min="1" value="{{ v.get('capacite_voyageurs','') }}" placeholder="ex: 4"></div>
+        </div>
+    </div>
+</fieldset>
+
+<fieldset>
+    <legend>Photos</legend>
+    {% if photos %}
+    <p class="muted" style="margin-top:0;">Photos actuelles (cochez pour supprimer) :</p>
+    <div class="photos-existantes">
+        {% for ph in photos %}
+        <label class="photo-vignette">
+            <img src="{{ ph.url }}" alt="">
+            <span class="vignette-suppr"><input type="checkbox" name="supprimer_photo" value="{{ ph.id }}"> Supprimer</span>
+        </label>
+        {% endfor %}
+    </div>
+    {% endif %}
+    <div class="field">
+        <label>{{ 'Ajouter des photos' if photos else 'Photos du bien' }} <span class="muted">(JPG, PNG, WEBP — plusieurs possibles, 12 Mo max)</span></label>
+        <input type="file" name="photos" accept="image/*" multiple>
+    </div>
+</fieldset>
+
+<script>
+    function majTarifs() {
+        var mode = document.getElementById('mode_location').value;
+        document.getElementById('bloc_mois').hidden = !(mode === 'longue_duree' || mode === 'les_deux');
+        document.getElementById('bloc_nuit').hidden = !(mode === 'courte_duree' || mode === 'les_deux');
+    }
+    majTarifs(); // état initial (dépôt vierge ou modification pré-remplie)
+</script>
+{% endmacro %}

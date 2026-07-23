@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Commissions — Administration{% endblock %}
+
+{% macro fcfa(v) %}{{ "{:,.0f}".format(v).replace(",", " ") }} FCFA{% endmacro %}
+
+{% block content %}
+<h1 class="section-title">Tableau de bord des commissions</h1>
+<p class="section-sub">Vos revenus générés par les frais de réservation.</p>
+
+<div class="kpi-grille">
+    <div class="kpi kpi-vert">
+        <span class="kpi-label">Total perçu</span>
+        <span class="kpi-valeur">{{ fcfa(k.total_percu) }}</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi-label">Perçu ce mois-ci</span>
+        <span class="kpi-valeur">{{ fcfa(k.percu_ce_mois) }}</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi-label">En attente de paiement</span>
+        <span class="kpi-valeur">{{ fcfa(k.total_attente) }}</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi-label">Réservations payées</span>
+        <span class="kpi-valeur">{{ k.nb_percues }}<span class="muted" style="font-size:1rem;"> / {{ k.nb_total }}</span></span>
+    </div>
+</div>
+
+<div class="dash-2col">
+    <div class="dash-carte">
+        <h3>Évolution (6 derniers mois)</h3>
+        {% if evolution %}
+            {% set maxi = (evolution | map(attribute='total') | map('float') | max) or 1 %}
+            <div class="mini-chart">
+                {% for e in evolution %}
+                <div class="mc-col">
+                    <div class="mc-bar" style="height: {{ ((e.total | float) / maxi * 120) | round }}px;" title="{{ fcfa(e.total) }}"></div>
+                    <span class="mc-label">{{ e.mois[5:] }}/{{ e.mois[2:4] }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="muted">Aucune donnée pour l'instant.</p>
+        {% endif %}
+    </div>
+
+    <div class="dash-carte">
+        <h3>Par type de location</h3>
+        {% if par_mode %}
+        <table class="recap-table">
+            {% for m in par_mode %}
+            <tr>
+                <td>{{ 'Longue durée (au mois)' if m.mode_location == 'longue_duree' else 'Courte durée (à la nuitée)' }}
+                    <span class="muted">· {{ m.nb }} résa</span></td>
+                <td>{{ fcfa(m.total) }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p class="muted">Aucune commission perçue pour l'instant.</p>
+        {% endif %}
+    </div>
+</div>
+
+<h3 style="margin-top:32px;">Détail des commissions</h3>
+{% if detail %}
+<div style="overflow-x:auto;">
+<table class="compare-table">
+    <thead>
+        <tr><th>Date</th><th>Bien</th><th>Locataire</th><th>Type</th><th>Base</th><th>Taux</th><th>Commission</th><th>Statut</th></tr>
+    </thead>
+    <tbody>
+    {% for d in detail %}
+        <tr>
+            <td>{{ d.created_at.strftime('%d/%m/%Y') }}</td>
+            <td>{{ d.titre }}<br><span class="muted">{{ d.quartier }}</span></td>
+            <td>{{ d.locataire }}</td>
+            <td>{{ 'Mois' if d.mode_location == 'longue_duree' else 'Nuitée' }}</td>
+            <td>{{ fcfa(d.montant_total) }}</td>
+            <td>{{ (d.taux | float | round(0) | int) ~ ' %' if d.taux and d.taux > 0 else 'fixe' }}</td>
+            <td><strong>{{ fcfa(d.montant) }}</strong></td>
+            <td>
+                {% if d.statut == 'percue' %}<span class="badge badge-publiee">Perçue</span>
+                {% else %}<span class="badge badge-brouillon">En attente</span>{% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<div class="empty">Aucune commission enregistrée pour le moment.</div>
+{% endif %}
+{% endblock %}

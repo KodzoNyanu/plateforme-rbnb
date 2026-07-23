@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge_statut %}
+{% block title %}Mes réservations — Locations Togo{% endblock %}
+
+{% block content %}
+<h1 class="section-title">Mes réservations</h1>
+<p class="section-sub">Suivez vos demandes et retrouvez les coordonnées des propriétaires.</p>
+
+{% if reservations %}
+<table class="compare-table">
+    <thead>
+        <tr><th>Bien</th><th>Dates</th><th>En ligne</th><th>Sur place</th><th>Statut</th><th></th></tr>
+    </thead>
+    <tbody>
+    {% for r in reservations %}
+        <tr>
+            <td><strong>{{ r.titre }}</strong><br><span class="muted">{{ r.quartier }}</span></td>
+            <td>{{ r.date_debut }}{% if r.date_fin %} → {{ r.date_fin }}{% endif %}</td>
+            <td>{{ "{:,.0f}".format(r.montant_en_ligne).replace(",", " ") }} FCFA</td>
+            <td>{{ "{:,.0f}".format(r.montant_sur_place).replace(",", " ") }} FCFA</td>
+            <td>{{ badge_statut(r.statut) }}</td>
+            <td><a href="{{ url_for('reservations.recap', reservation_id=r.id) }}">Voir</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="empty">
+    Aucune réservation pour l'instant.
+    <br><br><a class="btn btn-primary" href="{{ url_for('search.index') }}">Trouver un logement</a>
+</div>
+{% endif %}
+{% endblock %}

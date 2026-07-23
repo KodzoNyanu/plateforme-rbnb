@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Comparer des quartiers — Locations Togo{% endblock %}
+
+{% block content %}
+<h1 class="section-title">Comparateur de quartiers</h1>
+<p class="section-sub">Deux zones face à face, critère par critère.</p>
+
+<form class="form-row" action="{{ url_for('zones.comparer') }}" method="get">
+    <div class="field">
+        <label>Quartier A</label>
+        <select name="a">
+            <option value="">— choisir —</option>
+            {% for q in quartiers %}<option value="{{ q.slug }}" {{ 'selected' if q.slug == slug_a }}>{{ q.nom }}</option>{% endfor %}
+        </select>
+    </div>
+    <div class="field">
+        <label>Quartier B</label>
+        <select name="b">
+            <option value="">— choisir —</option>
+            {% for q in quartiers %}<option value="{{ q.slug }}" {{ 'selected' if q.slug == slug_b }}>{{ q.nom }}</option>{% endfor %}
+        </select>
+    </div>
+    <div class="field" style="display:flex; align-items:flex-end;">
+        <button class="btn btn-primary" type="submit">Comparer</button>
+    </div>
+</form>
+
+{% if colonnes|length == 2 %}
+<table class="compare-table">
+    <thead>
+        <tr>
+            <th>Critère</th>
+            {% for col in colonnes %}<th>{{ col.quartier.nom }}</th>{% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Loyer moyen /mois</strong></td>
+            {% for col in colonnes %}
+            <td>{% if col.loyer and col.loyer.nb_biens %}{{ "{:,.0f}".format(col.loyer.loyer_moyen).replace(",", " ") }} FCFA{% else %}<span class="muted">—</span>{% endif %}</td>
+            {% endfor %}
+        </tr>
+        {% for cr in criteres %}
+        <tr>
+            <td>{{ cr.libelle }}</td>
+            {% for col in colonnes %}
+                {% set s = col.scores.get(cr.code) %}
+                <td>
+                {% if s and s.type_valeur == 'score' and s.score is not none %}
+                    <span class="score-bar" style="width: {{ (s.score / 5 * 90)|round }}px;"></span> {{ s.score }}/5
+                {% elif s and s.type_valeur == 'numerique' and s.valeur_num is not none %}
+                    {{ "{:,.0f}".format(s.valeur_num).replace(",", " ") }}
+                {% elif s and s.valeur_texte %}
+                    {{ s.valeur_texte }}
+                {% else %}
+                    <span class="muted">—</span>
+                {% endif %}
+                </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% elif slug_a or slug_b %}
+<div class="empty">Sélectionne <strong>deux</strong> quartiers valides pour lancer la comparaison.</div>
+{% else %}
+<div class="empty">Choisis deux quartiers ci-dessus, puis clique sur « Comparer ».</div>
+{% endif %}
+{% endblock %}
